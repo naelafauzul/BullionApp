@@ -17,7 +17,7 @@ class HomeViewModel {
             return
         }
         
-        guard let url = URL(string: "https://api-test.bullionecosystem.com/api/v1/admin?offset=5&limit=5") else {
+        guard let url = URL(string: "https://api-test.bullionecosystem.com/api/v1/admin/?offset=32&limit=10") else {
             print("Invalid URL")
             return
         }

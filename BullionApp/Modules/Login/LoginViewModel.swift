@@ -12,7 +12,7 @@ class LoginViewModel {
     
     var email: String = ""
     var password: String = ""
-    var authToken: String? // Properti untuk menyimpan token
+    var authToken: String?
     
     var onLoginSuccess: ((User) -> Void)?
     var onLoginError: ((String) -> Void)?
@@ -27,7 +27,6 @@ class LoginViewModel {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        // Encrypt the password with SHA-256
         let encryptedPassword = sha256(password)
         
         let body: [String: Any] = [

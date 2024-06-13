@@ -22,7 +22,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.view.backgroundColor = UIColor.orange
+        self.view.backgroundColor = UIColor.customOrange
         
         setupBackgroundRectangle()
         setupTextFieldStyles()
@@ -87,7 +87,7 @@ class ViewController: UIViewController {
         self.view.addSubview(logoImageView)
         
         let backgroundView = UIView()
-        backgroundView.backgroundColor = UIColor.white
+        backgroundView.backgroundColor = UIColor.customGray
         backgroundView.layer.cornerRadius = 24
         backgroundView.layer.shadowColor = UIColor.black.cgColor
         backgroundView.layer.shadowOpacity = 0.2
@@ -99,7 +99,7 @@ class ViewController: UIViewController {
         
         emailText = UILabel()
         emailText.text = "Email"
-        emailText.textColor = UIColor.orange
+        emailText.textColor = UIColor.customOrange
         emailText.translatesAutoresizingMaskIntoConstraints = false
         backgroundView.addSubview(emailText)
         
@@ -112,7 +112,7 @@ class ViewController: UIViewController {
         
         passwordText = UILabel()
         passwordText.text = "Password"
-        passwordText.textColor = UIColor.orange
+        passwordText.textColor = UIColor.customOrange
         passwordText.translatesAutoresizingMaskIntoConstraints = false
         backgroundView.addSubview(passwordText)
         

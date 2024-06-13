@@ -15,6 +15,7 @@ class HomeViewController: UIViewController {
     var tableView: UITableView!
     var HomeVM = HomeViewModel()
     var addUserButton: UIButton!
+    var listText: UILabel!
     
     var authToken: String?
     var bannerImages: [UIImage] = [
@@ -26,7 +27,7 @@ class HomeViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.view.backgroundColor = UIColor.orange
+        self.view.backgroundColor = UIColor.customOrange
         
         setupView()
         HomeVM.authToken = authToken
@@ -78,11 +79,10 @@ class HomeViewController: UIViewController {
         NSLayoutConstraint.activate([
             bannerCollectionView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 20),
             bannerCollectionView.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 30),
-            bannerCollectionView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -20),
+            bannerCollectionView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: 0),
             bannerCollectionView.heightAnchor.constraint(equalToConstant: 160),
         ])
         
-        // Setup Page Control
         pageControl = UIPageControl()
         pageControl.translatesAutoresizingMaskIntoConstraints = false
         pageControl.numberOfPages = bannerImages.count
@@ -116,25 +116,36 @@ class HomeViewController: UIViewController {
             backgroundView.topAnchor.constraint(equalTo: pageControl.bottomAnchor, constant: 20)
         ])
         
+        listText = UILabel()
+        listText.translatesAutoresizingMaskIntoConstraints = false
+        listText.text = "List Users"
+        listText.textColor = UIColor.customOrange
+        listText.font = UIFont.preferredFont(forTextStyle: .headline)
+        backgroundView.addSubview(listText)
+        
+        NSLayoutConstraint.activate([
+            listText.leadingAnchor.constraint(equalTo: backgroundView.leadingAnchor, constant: 20),
+            listText.topAnchor.constraint(equalTo: backgroundView.topAnchor, constant: 20)
+        ])
+        
         tableView = UITableView()
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.dataSource = self
         tableView.delegate = self
         tableView.register(UserTableViewCell.self, forCellReuseIdentifier: "UserTableViewCell")
-        tableView.backgroundColor = .clear
         backgroundView.addSubview(tableView)
         
         NSLayoutConstraint.activate([
             tableView.leadingAnchor.constraint(equalTo: backgroundView.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: backgroundView.trailingAnchor),
-            tableView.topAnchor.constraint(equalTo: backgroundView.topAnchor, constant: 20),
+            tableView.topAnchor.constraint(equalTo: listText.bottomAnchor, constant: 20),
             tableView.bottomAnchor.constraint(equalTo: backgroundView.bottomAnchor, constant: -80)
         ])
         
         addUserButton = UIButton(type: .system)
         addUserButton.setTitle("Add User", for: .normal)
         addUserButton.translatesAutoresizingMaskIntoConstraints = false
-        addUserButton.backgroundColor = UIColor.blue
+        addUserButton.backgroundColor = UIColor.customBlue
         addUserButton.layer.cornerRadius = 20
         addUserButton.setTitleColor(.white, for: .normal)
         backgroundView.addSubview(addUserButton)
@@ -154,14 +165,11 @@ class HomeViewController: UIViewController {
     }
     
     func showUserDetailDialog(userId: String) {
-        HomeVM.fetchUserDetail(userId: userId) { [weak self] userDetail in
-            guard let self = self, let userDetail = userDetail else { return }
-            
+        if let userDetail = HomeVM.userList.first(where: { $0.id == userId }) {
             DispatchQueue.main.async {
                 let detailVC = UserDetailViewController()
                 detailVC.userDetail = userDetail
-                detailVC.modalPresentationStyle = .custom
-                detailVC.transitioningDelegate = self
+                detailVC.modalPresentationStyle = .formSheet
                 self.present(detailVC, animated: true, completion: nil)
             }
         }
@@ -206,28 +214,5 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let user = HomeVM.userList[indexPath.row]
         showUserDetailDialog(userId: user.id)
-    }
-}
-
-extension HomeViewController: UIViewControllerTransitioningDelegate {
-    func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
-        return HalfSizePresentationController(presentedViewController: presented, presenting: presenting)
-    }
-}
-
-class HalfSizePresentationController: UIPresentationController {
-    override var frameOfPresentedViewInContainerView: CGRect {
-        guard let containerView = containerView else {
-            return .zero
-        }
-        
-        let height = containerView.bounds.height / 2
-        let yOffset = containerView.bounds.height - height
-        return CGRect(x: 0, y: yOffset, width: containerView.bounds.width, height: height)
-    }
-
-    override func containerViewWillLayoutSubviews() {
-        super.containerViewWillLayoutSubviews()
-        presentedView?.frame = frameOfPresentedViewInContainerView
     }
 }

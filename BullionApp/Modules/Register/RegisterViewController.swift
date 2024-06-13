@@ -24,13 +24,19 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
     var addUserButton: UIButton!
     var logoImageView: UIImageView!
     var backButton: UIButton!
+    var dateText: UILabel!
     var dateOfBirthTextField: UITextField!
     var datePicker: UIDatePicker!
     var dateButton: UIButton!
+    var phoneText: UILabel!
     var phoneNumberTextField: UITextField!
+    var photoText: UILabel!
     var photoProfileTextField: UITextField!
     var photoButton: UIButton!
+    var addressText: UILabel!
     var addressTextfield: UITextField!
+    var passwordDesc: UILabel!
+    var confirmDesc: UILabel!
     
     var maleButton: UIButton!
     var femaleButton: UIButton!
@@ -42,7 +48,7 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.view.backgroundColor = UIColor.orange
+        self.view.backgroundColor = UIColor.customOrange
         
         setupView()
         setupBindings()
@@ -70,7 +76,26 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
     }
     
     @objc func dateButtonTapped(_ sender: UIButton) {
-        dateOfBirthTextField.becomeFirstResponder()
+        let alertController = UIAlertController(title: "Select Date of Birth", message: nil, preferredStyle: .actionSheet)
+        
+        let pickerFrame = CGRect(x: 0, y: 0, width: alertController.view.bounds.width, height: 216)
+        datePicker = UIDatePicker(frame: pickerFrame)
+        datePicker.datePickerMode = .date
+        datePicker.addTarget(self, action: #selector(datePickerValueChanged(_:)), for: .valueChanged)
+        
+        alertController.view.addSubview(datePicker)
+        
+        let okAction = UIAlertAction(title: "OK", style: .default) { _ in
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            self.dateOfBirthTextField.text = dateFormatter.string(from: self.datePicker.date)
+        }
+        alertController.addAction(okAction)
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true, completion: nil)
     }
     
     @objc func photoButtonTapped(_ sender: UIButton) {
@@ -81,14 +106,14 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
     }
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let pickedImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage,
-               let imageUrl = info[UIImagePickerController.InfoKey.imageURL] as? URL {
-                photoProfileTextField.text = imageUrl.lastPathComponent
-                selectedPhoto = pickedImage
-                viewModel.photo = pickedImage // Set the selected photo in the view model
-            }
-            dismiss(animated: true, completion: nil)
+        if let pickedImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage,
+           let imageUrl = info[UIImagePickerController.InfoKey.imageURL] as? URL {
+            photoProfileTextField.text = imageUrl.lastPathComponent
+            selectedPhoto = pickedImage
+            viewModel.photo = pickedImage
         }
+        dismiss(animated: true, completion: nil)
+    }
     
     
     @objc func addUserButtonTapped(_ sender: UIButton) {
@@ -99,8 +124,13 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
               let dateOfBirth = dateOfBirthTextField.text, !dateOfBirth.isEmpty,
               let phone = phoneNumberTextField.text, !phone.isEmpty,
               let address = addressTextfield.text, !address.isEmpty,
-                let gender = maleButton.isSelected ? "male" : femaleButton.isSelected ? "female" : nil else {
+              let gender = maleButton.isSelected ? "male" : femaleButton.isSelected ? "female" : nil else {
             showAlert(message: "All fields must be filled")
+            return
+        }
+        
+        guard validatePassword(password) else {
+            showAlert(message: "Password must be at least 8 characters long, contain at least one uppercase letter and one number")
             return
         }
         
@@ -130,6 +160,13 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         viewModel.registerUser()
     }
     
+    func validatePassword(_ password: String) -> Bool {
+            let passwordRegex = "^(?=.*[A-Z])(?=.*[0-9]).{8,}$"
+            let passwordTest = NSPredicate(format: "SELF MATCHES %@", passwordRegex)
+            return passwordTest.evaluate(with: password)
+        }
+        
+    
     func setupBindings() {
         viewModel.onRegisterSuccess = { [weak self] in
             DispatchQueue.main.async {
@@ -156,12 +193,13 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         let backImage = UIImage(systemName: "chevron.left")
         backButton.setImage(backImage, for: .normal)
         backButton.setTitleColor(.white, for: .normal)
+        backButton.tintColor = .white
         backButton.addTarget(self, action: #selector(backButtonTapped(_:)), for: .touchUpInside)
         backButton.translatesAutoresizingMaskIntoConstraints = false
         self.view.addSubview(backButton)
         
         let backgroundView = UIView()
-        backgroundView.backgroundColor = UIColor.white
+        backgroundView.backgroundColor = UIColor.customGray
         backgroundView.layer.cornerRadius = 24
         backgroundView.layer.shadowColor = UIColor.black.cgColor
         backgroundView.layer.shadowOpacity = 0.2
@@ -178,7 +216,6 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         contentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentView)
         
-        // Set constraints for scroll view and content view
         NSLayoutConstraint.activate([
             scrollView.leadingAnchor.constraint(equalTo: backgroundView.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: backgroundView.trailingAnchor),
@@ -189,12 +226,13 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
             contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor) // Ensure content view width is same as scroll view
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
         ])
         
         nameText = UILabel()
         nameText.text = "Name"
-        nameText.textColor = UIColor.orange
+        nameText.textColor = UIColor.customOrange
+        nameText.font = UIFont.preferredFont(forTextStyle: .footnote)
         nameText.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(nameText)
         
@@ -210,14 +248,15 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         
         genderText = UILabel()
         genderText.text = "Gender"
-        genderText.textColor = UIColor.orange
+        genderText.textColor = UIColor.customOrange
+        genderText.font = UIFont.preferredFont(forTextStyle: .footnote)
         genderText.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(genderText)
         
         maleButton = UIButton(type: .system)
-        maleButton.setTitle(" Male", for: .normal)
-        maleButton.tintColor = .orange
-        maleButton.layer.borderColor = UIColor.orange.cgColor
+        maleButton.setTitle("Male", for: .normal)
+        maleButton.tintColor = .customOrange
+        maleButton.layer.borderColor = UIColor.customOrange.cgColor
         maleButton.layer.borderWidth = 1
         maleButton.layer.cornerRadius = 5
         maleButton.addTarget(self, action: #selector(genderButtonTapped(_:)), for: .touchUpInside)
@@ -225,14 +264,21 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         contentView.addSubview(maleButton)
         
         femaleButton = UIButton(type: .system)
-        femaleButton.setTitle(" Female", for: .normal)
-        femaleButton.tintColor = .orange
-        femaleButton.layer.borderColor = UIColor.orange.cgColor
+        femaleButton.setTitle("Female", for: .normal)
+        femaleButton.tintColor = .customOrange
+        femaleButton.layer.borderColor = UIColor.customOrange.cgColor
         femaleButton.layer.borderWidth = 1
         femaleButton.layer.cornerRadius = 5
         femaleButton.addTarget(self, action: #selector(genderButtonTapped(_:)), for: .touchUpInside)
         femaleButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(femaleButton)
+        
+        dateText = UILabel()
+        dateText.text = "Date of Birth"
+        dateText.textColor = UIColor.customOrange
+        dateText.font = UIFont.preferredFont(forTextStyle: .footnote)
+        dateText.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(dateText)
         
         dateOfBirthTextField = UITextField()
         dateOfBirthTextField.placeholder = "Select date of birth"
@@ -246,6 +292,7 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         
         dateButton = UIButton(type: .system)
         dateButton.setImage(UIImage(systemName: "calendar"), for: .normal)
+        dateButton.tintColor = .black
         dateButton.addTarget(self, action: #selector(dateButtonTapped(_:)), for: .touchUpInside)
         dateButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(dateButton)
@@ -257,7 +304,8 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         
         emailText = UILabel()
         emailText.text = "Email"
-        emailText.textColor = UIColor.orange
+        emailText.textColor = UIColor.customOrange
+        emailText.font = UIFont.preferredFont(forTextStyle: .footnote)
         emailText.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(emailText)
         
@@ -271,6 +319,13 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         emailTextField.layer.masksToBounds = true
         contentView.addSubview(emailTextField)
         
+        phoneText = UILabel()
+        phoneText.text = "Phone Number"
+        phoneText.textColor = UIColor.customOrange
+        phoneText.font = UIFont.preferredFont(forTextStyle: .footnote)
+        phoneText.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(phoneText)
+        
         phoneNumberTextField = UITextField()
         phoneNumberTextField.placeholder = "Enter phone number"
         phoneNumberTextField.borderStyle = .roundedRect
@@ -281,8 +336,15 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         phoneNumberTextField.layer.masksToBounds = true
         contentView.addSubview(phoneNumberTextField)
         
+        addressText = UILabel()
+        addressText.text = "Adress"
+        addressText.textColor = UIColor.customOrange
+        addressText.font = UIFont.preferredFont(forTextStyle: .footnote)
+        addressText.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(addressText)
+        
         addressTextfield = UITextField()
-        addressTextfield.placeholder = "Enter address"
+        addressTextfield.placeholder = "Enter adress"
         addressTextfield.borderStyle = .roundedRect
         addressTextfield.translatesAutoresizingMaskIntoConstraints = false
         addressTextfield.layer.cornerRadius = 20
@@ -290,6 +352,13 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         addressTextfield.layer.borderColor = UIColor.lightGray.cgColor
         addressTextfield.layer.masksToBounds = true
         contentView.addSubview(addressTextfield)
+        
+        photoText = UILabel()
+        photoText.text = "Profile photo"
+        photoText.textColor = UIColor.customOrange
+        photoText.font = UIFont.preferredFont(forTextStyle: .footnote)
+        photoText.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(photoText)
         
         photoProfileTextField = UITextField()
         photoProfileTextField.placeholder = "Select photo profile"
@@ -302,16 +371,24 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         contentView.addSubview(photoProfileTextField)
         
         photoButton = UIButton(type: .system)
-        photoButton.setTitle("Browse", for: .normal)
+        photoButton.setImage(UIImage(systemName: "link"), for: .normal)
         photoButton.addTarget(self, action: #selector(photoButtonTapped(_:)), for: .touchUpInside)
         photoButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(photoButton)
         
         passwordText = UILabel()
         passwordText.text = "Password"
-        passwordText.textColor = UIColor.orange
+        passwordText.textColor = UIColor.customOrange
+        passwordText.font = UIFont.preferredFont(forTextStyle: .footnote)
         passwordText.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(passwordText)
+        
+        passwordDesc = UILabel()
+        passwordDesc.text = "Min 8 Char | Min 1 Capital and Number"
+        passwordDesc.textColor = UIColor.lightGray
+        passwordDesc.font = UIFont.preferredFont(forTextStyle: .caption1)
+        passwordDesc.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(passwordDesc)
         
         passwordTextField = UITextField()
         passwordTextField.placeholder = "Enter password"
@@ -326,9 +403,17 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         
         confirmPasswordText = UILabel()
         confirmPasswordText.text = "Confirm Password"
-        confirmPasswordText.textColor = UIColor.orange
+        confirmPasswordText.textColor = UIColor.customOrange
+        confirmPasswordText.font = UIFont.preferredFont(forTextStyle: .footnote)
         confirmPasswordText.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(confirmPasswordText)
+        
+        confirmDesc = UILabel()
+        confirmDesc.text = "Make sure the password matches"
+        confirmDesc.textColor = UIColor.lightGray
+        confirmDesc.font = UIFont.preferredFont(forTextStyle: .caption1)
+        confirmDesc.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(confirmDesc)
         
         confirmPasswordTextField = UITextField()
         confirmPasswordTextField.placeholder = "Enter password again"
@@ -341,11 +426,10 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         confirmPasswordTextField.isSecureTextEntry = true
         contentView.addSubview(confirmPasswordTextField)
         
-        
         addUserButton = UIButton(type: .system)
         addUserButton.setTitle("Add User", for: .normal)
         addUserButton.translatesAutoresizingMaskIntoConstraints = false
-        addUserButton.backgroundColor = UIColor.blue
+        addUserButton.backgroundColor = UIColor.customBlue
         addUserButton.layer.cornerRadius = 20
         addUserButton.setTitleColor(.white, for: .normal)
         addUserButton.addTarget(self, action: #selector(addUserButtonTapped(_:)), for: .touchUpInside)
@@ -388,12 +472,15 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
             femaleButton.widthAnchor.constraint(equalToConstant: 100),
             femaleButton.heightAnchor.constraint(equalToConstant: 40),
             
+            dateText.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            dateText.topAnchor.constraint(equalTo: maleButton.bottomAnchor, constant: 20),
+            
             dateOfBirthTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            dateOfBirthTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -60),
-            dateOfBirthTextField.topAnchor.constraint(equalTo: femaleButton.bottomAnchor, constant: 20),
+            dateOfBirthTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            dateOfBirthTextField.topAnchor.constraint(equalTo: dateText.bottomAnchor, constant: 10),
             dateOfBirthTextField.heightAnchor.constraint(equalToConstant: 48),
             
-            dateButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            dateButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -40),
             dateButton.centerYAnchor.constraint(equalTo: dateOfBirthTextField.centerYAnchor),
             dateButton.heightAnchor.constraint(equalToConstant: 48),
             dateButton.widthAnchor.constraint(equalToConstant: 48),
@@ -406,40 +493,54 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
             emailTextField.topAnchor.constraint(equalTo: emailText.bottomAnchor, constant: 10),
             emailTextField.heightAnchor.constraint(equalToConstant: 48),
             
+            phoneText.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            phoneText.topAnchor.constraint(equalTo: emailTextField.bottomAnchor, constant: 20),
+            
             phoneNumberTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             phoneNumberTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            phoneNumberTextField.topAnchor.constraint(equalTo: emailTextField.bottomAnchor, constant: 20),
+            phoneNumberTextField.topAnchor.constraint(equalTo: phoneText.bottomAnchor, constant: 10),
             phoneNumberTextField.heightAnchor.constraint(equalToConstant: 48),
             
-            addressTextfield.leadingAnchor.constraint(equalTo: phoneNumberTextField.leadingAnchor),
+            addressText.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            addressText.topAnchor.constraint(equalTo: phoneNumberTextField.bottomAnchor, constant: 20),
+            
+            addressTextfield.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             addressTextfield.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            addressTextfield.topAnchor.constraint(equalTo: phoneNumberTextField.bottomAnchor, constant: 10),
+            addressTextfield.topAnchor.constraint(equalTo: addressText.bottomAnchor, constant: 10),
             addressTextfield.heightAnchor.constraint(equalToConstant: 48),
             
+            photoText.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            photoText.topAnchor.constraint(equalTo: addressTextfield.bottomAnchor, constant: 20),
+            
             photoProfileTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            photoProfileTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -100),
-            photoProfileTextField.topAnchor.constraint(equalTo: addressTextfield.bottomAnchor, constant: 20),
+            photoProfileTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            photoProfileTextField.topAnchor.constraint(equalTo: photoText.bottomAnchor, constant: 10),
             photoProfileTextField.heightAnchor.constraint(equalToConstant: 48),
             
-            photoButton.leadingAnchor.constraint(equalTo: photoProfileTextField.trailingAnchor, constant: 10),
-            photoButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            photoButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -40),
             photoButton.centerYAnchor.constraint(equalTo: photoProfileTextField.centerYAnchor),
             photoButton.heightAnchor.constraint(equalToConstant: 48),
             
             passwordText.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             passwordText.topAnchor.constraint(equalTo: photoProfileTextField.bottomAnchor, constant: 20),
             
+            passwordDesc.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            passwordDesc.topAnchor.constraint(equalTo: passwordText.bottomAnchor, constant: 10),
+            
             passwordTextField.leadingAnchor.constraint(equalTo: passwordText.leadingAnchor),
             passwordTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            passwordTextField.topAnchor.constraint(equalTo: passwordText.bottomAnchor, constant: 10),
+            passwordTextField.topAnchor.constraint(equalTo: passwordDesc.bottomAnchor, constant: 10),
             passwordTextField.heightAnchor.constraint(equalToConstant: 48),
             
             confirmPasswordText.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             confirmPasswordText.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 20),
             
-            confirmPasswordTextField.leadingAnchor.constraint(equalTo: confirmPasswordText.leadingAnchor),
+            confirmDesc.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            confirmDesc.topAnchor.constraint(equalTo: confirmPasswordText.bottomAnchor, constant: 10),
+            
+            confirmPasswordTextField.leadingAnchor.constraint(equalTo: confirmDesc.leadingAnchor),
             confirmPasswordTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            confirmPasswordTextField.topAnchor.constraint(equalTo: confirmPasswordText.bottomAnchor, constant: 10),
+            confirmPasswordTextField.topAnchor.constraint(equalTo: confirmDesc.bottomAnchor, constant: 10),
             confirmPasswordTextField.heightAnchor.constraint(equalToConstant: 48),
             
             addUserButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
@@ -453,11 +554,11 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
     func updateGenderButtons() {
         let maleImage = maleButton.isSelected ? UIImage(named: "checked") : UIImage(named: "unchecked")
         maleButton.setImage(maleImage, for: .normal)
-        maleButton.backgroundColor = maleButton.isSelected ? .orange : .clear
+        maleButton.backgroundColor = maleButton.isSelected ? .customOrange : .clear
         
         let femaleImage = femaleButton.isSelected ? UIImage(named: "checked") : UIImage(named: "unchecked")
         femaleButton.setImage(femaleImage, for: .normal)
-        femaleButton.backgroundColor = femaleButton.isSelected ? .orange : .clear
+        femaleButton.backgroundColor = femaleButton.isSelected ? .customOrange : .clear
     }
     
     func showAlert(message: String) {
