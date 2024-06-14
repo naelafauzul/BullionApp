@@ -12,7 +12,7 @@ class HomeViewController: UIViewController {
     var pageControl: UIPageControl!
     var logoImageView: UIImageView!
     var logout: UIButton!
-    var tableView: UITableView!
+    var collectionView: UICollectionView!
     var HomeVM = HomeViewModel()
     var addUserButton: UIButton!
     var listText: UILabel!
@@ -33,9 +33,14 @@ class HomeViewController: UIViewController {
         HomeVM.authToken = authToken
         HomeVM.fetchUsers {
             DispatchQueue.main.async {
-                self.tableView.reloadData()
+                self.collectionView.reloadData()
             }
         }
+    }
+    
+    @objc func addUserButtonTapped(_ sender: Any) {
+        let registerVC = RegisterViewController()
+        self.navigationController?.pushViewController(registerVC, animated: true)
     }
     
     func setupView() {
@@ -128,22 +133,29 @@ class HomeViewController: UIViewController {
             listText.topAnchor.constraint(equalTo: backgroundView.topAnchor, constant: 20)
         ])
         
-        tableView = UITableView()
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.dataSource = self
-        tableView.delegate = self
-        tableView.register(UserTableViewCell.self, forCellReuseIdentifier: "UserTableViewCell")
-        backgroundView.addSubview(tableView)
+        let layoutVertical = UICollectionViewFlowLayout()
+        layoutVertical.scrollDirection = .vertical
+        layoutVertical.minimumLineSpacing = 10
+        layoutVertical.itemSize = CGSize(width: view.frame.width - 40, height: 100)
+        
+        collectionView = UICollectionView(frame: .zero, collectionViewLayout: layoutVertical)
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.dataSource = self
+        collectionView.delegate = self
+        collectionView.register(UserCollectionViewCell.self, forCellWithReuseIdentifier: "UserCollectionViewCell")
+        collectionView.backgroundColor = .clear
+        backgroundView.addSubview(collectionView)
         
         NSLayoutConstraint.activate([
-            tableView.leadingAnchor.constraint(equalTo: backgroundView.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: backgroundView.trailingAnchor),
-            tableView.topAnchor.constraint(equalTo: listText.bottomAnchor, constant: 20),
-            tableView.bottomAnchor.constraint(equalTo: backgroundView.bottomAnchor, constant: -80)
+            collectionView.leadingAnchor.constraint(equalTo: backgroundView.leadingAnchor),
+            collectionView.trailingAnchor.constraint(equalTo: backgroundView.trailingAnchor),
+            collectionView.topAnchor.constraint(equalTo: listText.bottomAnchor, constant: 20),
+            collectionView.bottomAnchor.constraint(equalTo: backgroundView.bottomAnchor, constant: -80)
         ])
         
         addUserButton = UIButton(type: .system)
         addUserButton.setTitle("Add User", for: .normal)
+        addUserButton.addTarget(self, action: #selector(addUserButtonTapped(_:)), for: .touchUpInside)
         addUserButton.translatesAutoresizingMaskIntoConstraints = false
         addUserButton.backgroundColor = UIColor.customBlue
         addUserButton.layer.cornerRadius = 20
@@ -153,7 +165,7 @@ class HomeViewController: UIViewController {
         NSLayoutConstraint.activate([
             addUserButton.leadingAnchor.constraint(equalTo: backgroundView.leadingAnchor, constant: 20),
             addUserButton.trailingAnchor.constraint(equalTo: backgroundView.trailingAnchor, constant: -20),
-            addUserButton.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 10),
+            addUserButton.topAnchor.constraint(equalTo: collectionView.bottomAnchor, constant: 10),
             addUserButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
@@ -165,54 +177,66 @@ class HomeViewController: UIViewController {
     }
     
     func showUserDetailDialog(userId: String) {
-        if let userDetail = HomeVM.userList.first(where: { $0.id == userId }) {
-            DispatchQueue.main.async {
-                let detailVC = UserDetailViewController()
-                detailVC.userDetail = userDetail
-                detailVC.modalPresentationStyle = .formSheet
-                self.present(detailVC, animated: true, completion: nil)
+        guard let authToken = authToken else { return }
+        DispatchQueue.main.async {
+            let detailVC = UserDetailViewController()
+            detailVC.userId = userId
+            detailVC.authToken = authToken
+            detailVC.modalPresentationStyle = .formSheet
+            detailVC.onDismiss = { [weak self] in
+                self?.HomeVM.fetchUsers {
+                    DispatchQueue.main.async {
+                        self?.collectionView.reloadData()
+                    }
+                }
             }
+            self.present(detailVC, animated: true, completion: nil)
         }
     }
 }
 
 extension HomeViewController: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return bannerImages.count
+        if collectionView == bannerCollectionView {
+            return bannerImages.count
+        } else {
+            return HomeVM.userList.count
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "BannerCollectionViewCell", for: indexPath) as! BannerCollectionViewCell
-        cell.configure(with: bannerImages[indexPath.item])
-        return cell
+        if collectionView == bannerCollectionView {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "BannerCollectionViewCell", for: indexPath) as! BannerCollectionViewCell
+            let image = bannerImages[indexPath.item]
+            cell.configure(with: image)
+            return cell
+        } else {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "UserCollectionViewCell", for: indexPath) as! UserCollectionViewCell
+            let user = HomeVM.userList[indexPath.item]
+            cell.configure(with: user)
+            return cell
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: 300, height: 150)
+        if collectionView == bannerCollectionView {
+            return CGSize(width: collectionView.frame.width, height: collectionView.frame.height)
+        } else {
+            return CGSize(width: collectionView.frame.width - 40, height: 100)
+        }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        if collectionView != bannerCollectionView {
+            let user = HomeVM.userList[indexPath.item]
+            showUserDetailDialog(userId: user.id)
+        }
     }
     
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        let pageNumber = round(scrollView.contentOffset.x / scrollView.frame.size.width)
-        pageControl.currentPage = Int(pageNumber)
-    }
-}
-
-extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return HomeVM.userList.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: "UserTableViewCell", for: indexPath) as? UserTableViewCell else {
-            return UITableViewCell()
+        if scrollView == bannerCollectionView {
+            let pageNumber = round(scrollView.contentOffset.x / scrollView.frame.size.width)
+            pageControl.currentPage = Int(pageNumber)
         }
-        let user = HomeVM.userList[indexPath.row]
-        cell.configure(with: user)
-        return cell
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let user = HomeVM.userList[indexPath.row]
-        showUserDetailDialog(userId: user.id)
     }
 }

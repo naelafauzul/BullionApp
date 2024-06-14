@@ -4,11 +4,22 @@
 //
 //  Created by Naela Fauzul Muna on 13/06/24.
 //
+
+//
+//  UserDetailViewController.swift
+//  BullionApp
+//
+//  Created by Naela Fauzul Muna on 13/06/24.
+//
+
 import UIKit
 
 class UserDetailViewController: UIViewController {
-    var userDetail: UserList?
-    
+    var userId: String?
+    var authToken: String?
+    var viewModel = UserDetailViewModel()
+    var onDismiss: (() -> Void)?
+
     let nameLabel = UILabel()
     let emailLabel = UILabel()
     let genderLabel = UILabel()
@@ -18,14 +29,28 @@ class UserDetailViewController: UIViewController {
     let addressText = UILabel()
     let addressLabel = UILabel()
     let imageView = UIImageView()
+    let phoneText = UILabel()
+    let phoneLabel = UILabel()
     let closeButton = UIButton()
-    let editUserButton = UIButton()
+    var editUserButton: UIButton!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
+        viewModel.authToken = authToken
         setupView()
-        configureView()
+        fetchData()
+    }
+    
+    @objc func editUserButtonTapped(_ sender: Any) {
+        let editVC = EditUserViewController()
+        editVC.userId = userId
+        editVC.authToken = authToken
+        editVC.modalPresentationStyle = .formSheet
+        editVC.onUserUpdated = { [weak self] in
+            self?.fetchData()
+        }
+        present(editVC, animated: true, completion: nil)
     }
     
     private func setupView() {
@@ -39,9 +64,6 @@ class UserDetailViewController: UIViewController {
         imageView.contentMode = .scaleAspectFill
         imageView.layer.cornerRadius = 8
         imageView.clipsToBounds = true
-        imageView.isUserInteractionEnabled = true
-        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(imageTapped))
-        imageView.addGestureRecognizer(tapGestureRecognizer)
         view.addSubview(imageView)
         
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -73,6 +95,16 @@ class UserDetailViewController: UIViewController {
         dateOfBirthLabel.font = UIFont.preferredFont(forTextStyle: .body)
         view.addSubview(dateOfBirthLabel)
         
+        phoneText.text = "Phone"
+        phoneText.translatesAutoresizingMaskIntoConstraints = false
+        phoneText.font = UIFont.preferredFont(forTextStyle: .caption1)
+        phoneText.textColor = .gray
+        view.addSubview(phoneText)
+        
+        phoneLabel.translatesAutoresizingMaskIntoConstraints = false
+        phoneLabel.font = UIFont.preferredFont(forTextStyle: .body)
+        view.addSubview(phoneLabel)
+        
         addressText.text = "Address"
         addressText.translatesAutoresizingMaskIntoConstraints = false
         addressText.font = UIFont.preferredFont(forTextStyle: .caption1)
@@ -82,8 +114,10 @@ class UserDetailViewController: UIViewController {
         addressLabel.translatesAutoresizingMaskIntoConstraints = false
         addressLabel.font = UIFont.preferredFont(forTextStyle: .body)
         view.addSubview(addressLabel)
-
+        
+        editUserButton = UIButton(type: .system)
         editUserButton.setTitle("Edit User", for: .normal)
+        editUserButton.addTarget(self, action: #selector(editUserButtonTapped(_:)), for: .touchUpInside)
         editUserButton.translatesAutoresizingMaskIntoConstraints = false
         editUserButton.backgroundColor = UIColor.customBlue
         editUserButton.layer.cornerRadius = 20
@@ -117,30 +151,48 @@ class UserDetailViewController: UIViewController {
             dateOfBirthLabel.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 20),
             dateOfBirthLabel.topAnchor.constraint(equalTo: dateOfBirthText.bottomAnchor, constant: 3),
             
+            phoneText.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 20),
+            phoneText.topAnchor.constraint(equalTo: dateOfBirthLabel.bottomAnchor, constant: 10),
+            
+            phoneLabel.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 20),
+            phoneLabel.topAnchor.constraint(equalTo: phoneText.bottomAnchor, constant: 3),
+            
             addressText.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 20),
-            addressText.topAnchor.constraint(equalTo: dateOfBirthLabel.bottomAnchor, constant: 10),
+            addressText.topAnchor.constraint(equalTo: phoneLabel.bottomAnchor, constant: 10),
             
             addressLabel.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 20),
             addressLabel.topAnchor.constraint(equalTo: addressText.bottomAnchor, constant: 3),
             
             editUserButton.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 20),
             editUserButton.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -20),
-            editUserButton.topAnchor.constraint(equalTo: addressLabel.bottomAnchor, constant: 20),
+            editUserButton.topAnchor.constraint(equalTo: addressLabel.bottomAnchor, constant: 40),
             editUserButton.heightAnchor.constraint(equalToConstant: 50),
-            
         ])
     }
     
+    private func fetchData() {
+        guard let userId = userId else { return }
+        viewModel.fetchUserDetail(userId: userId) { [weak self] success, errorMessage in
+            DispatchQueue.main.async {
+                if success {
+                    self?.configureView()
+                } else {
+                    self?.showError(message: errorMessage)
+                }
+            }
+        }
+    }
+    
     private func configureView() {
-        guard let userDetail = userDetail else { return }
-        nameLabel.text = userDetail.name
+        guard let userDetail = viewModel.userDetail else { return }
+        nameLabel.text = "\(userDetail.firstName) \(userDetail.lastName)"
         emailLabel.text = userDetail.email
         genderLabel.text = userDetail.gender
         addressLabel.text = userDetail.address
-        dateOfBirthLabel.text = formattedDate(from: userDetail.dateOfBirth)
         if let image = userDetail.uiImage {
             imageView.image = image
         }
+        dateOfBirthLabel.text = formattedDate(from: userDetail.dateOfBirth)
     }
     
     private func formattedDate(from dateString: String) -> String {
@@ -153,15 +205,14 @@ class UserDetailViewController: UIViewController {
         return dateString
     }
     
-    @objc private func closeButtonTapped() {
-        dismiss(animated: true, completion: nil)
+    private func showError(message: String?) {
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        present(alert, animated: true, completion: nil)
     }
     
-    @objc private func imageTapped() {
-        guard let image = imageView.image else { return }
-        let fullScreenImageVC = FullScreenImageViewController()
-        fullScreenImageVC.image = image
-        present(fullScreenImageVC, animated: true, completion: nil)
+    @objc private func closeButtonTapped() {
+        onDismiss?()
+        dismiss(animated: true, completion: nil)
     }
 }
-

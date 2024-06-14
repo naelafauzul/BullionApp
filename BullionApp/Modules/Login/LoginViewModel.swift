@@ -50,8 +50,8 @@ class LoginViewModel {
             }
 
             if let jsonResponse = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-               let token = jsonResponse["token"] as? String { // Mendapatkan token dari respons JSON
-                self.authToken = token // Menyimpan token
+               let token = jsonResponse["token"] as? String {
+                self.authToken = token
                 print("Token:", token)
             }
             

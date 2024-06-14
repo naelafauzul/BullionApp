@@ -58,7 +58,6 @@ class ViewController: UIViewController {
             DispatchQueue.main.async {
                 let homeVC = HomeViewController()
                 homeVC.authToken = user.token
-                // Navigasi ke HomeViewController menggunakan UINavigationController
                 if let navigationController = self?.navigationController {
                     navigationController.pushViewController(homeVC, animated: true)
                 }
