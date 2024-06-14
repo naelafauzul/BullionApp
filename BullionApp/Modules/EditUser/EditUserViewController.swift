@@ -21,35 +21,27 @@ class EditUserViewController: UIViewController, UIImagePickerControllerDelegate,
     var genderText: UILabel!
     var addUserButton: UIButton!
     var logoImageView: UIImageView!
-    var backButton: UIButton!
     var dateText: UILabel!
     var dateOfBirthTextField: UITextField!
     var datePicker: UIDatePicker!
     var dateButton: UIButton!
     var phoneText: UILabel!
     var phoneNumberTextField: UITextField!
-    var photoText: UILabel!
-    var photoProfileTextField: UITextField!
-    var photoButton: UIButton!
     var addressText: UILabel!
     var addressTextfield: UITextField!
     
     var maleButton: UIButton!
     var femaleButton: UIButton!
     
-    var selectedPhoto: UIImage?
-    
-    var viewModel = UserDetailViewModel()
+    var viewModel = EditUserViewModel()
     
     var onUserUpdated: (() -> Void)?
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         self.view.backgroundColor = UIColor.customOrange
         
         setupView()
-        setupBindings()
         fetchData()
     }
     
@@ -97,22 +89,6 @@ class EditUserViewController: UIViewController, UIImagePickerControllerDelegate,
         present(alertController, animated: true, completion: nil)
     }
     
-    @objc func photoButtonTapped(_ sender: UIButton) {
-        let imagePickerController = UIImagePickerController()
-        imagePickerController.delegate = self
-        imagePickerController.sourceType = .photoLibrary
-        present(imagePickerController, animated: true, completion: nil)
-    }
-    
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        if let pickedImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage,
-           let imageUrl = info[UIImagePickerController.InfoKey.imageURL] as? URL {
-            photoProfileTextField.text = imageUrl.lastPathComponent
-            selectedPhoto = pickedImage
-
-        }
-        dismiss(animated: true, completion: nil)
-    }
     
     @objc func addUserButtonTapped(_ sender: UIButton) {
         guard let name = nameTextField.text, !name.isEmpty,
@@ -131,8 +107,8 @@ class EditUserViewController: UIViewController, UIImagePickerControllerDelegate,
             return
         }
         
-        let firstName = String(nameComponents.first!)
-        let lastName = String(nameComponents.last!)
+        let firstName = nameComponents.dropLast().joined(separator: " ")
+        let lastName = nameComponents.last.map { String($0) } ?? ""
         
         viewModel.userDetail?.firstName = firstName
         viewModel.userDetail?.lastName = lastName
@@ -143,33 +119,17 @@ class EditUserViewController: UIViewController, UIImagePickerControllerDelegate,
         viewModel.userDetail?.address = address
         
         viewModel.updateUserDetail(userId: userId ?? "") { [weak self] success, errorMessage in
-            if success, let image = self?.selectedPhoto {
-                self?.viewModel.uploadPhoto(userId: self?.userId ?? "", image: image) { photoSuccess, photoErrorMessage in
-                    DispatchQueue.main.async {
-                        if photoSuccess {
-                            self?.onUserUpdated?()
-                            self?.dismiss(animated: true, completion: nil)
-                        } else {
-                            self?.showAlert(message: photoErrorMessage ?? "Failed to update user photo")
-                        }
-                    }
-                }
-            } else {
-                DispatchQueue.main.async {
-                    if success {
-                        self?.onUserUpdated?()
-                        self?.dismiss(animated: true, completion: nil)
-                    } else {
-                        self?.showAlert(message: errorMessage ?? "Failed to update user")
-                    }
+            DispatchQueue.main.async {
+                if success {
+                    self?.onUserUpdated?()
+                    self?.dismiss(animated: true, completion: nil)
+                } else {
+                    self?.showAlert(message: errorMessage ?? "Failed to update user")
                 }
             }
         }
     }
     
-    func setupBindings() {
-        // Implement bindings if necessary
-    }
     
     private func fetchData() {
         guard let userId = userId else { return }
@@ -195,9 +155,6 @@ class EditUserViewController: UIViewController, UIImagePickerControllerDelegate,
         maleButton.isSelected = userDetail.gender == "male"
         femaleButton.isSelected = userDetail.gender == "female"
         updateGenderButtons()
-        if let image = userDetail.uiImage {
-            // Display the selected image if available
-        }
     }
     
     func setupView() {
@@ -206,15 +163,6 @@ class EditUserViewController: UIViewController, UIImagePickerControllerDelegate,
         logoImageView.contentMode = .scaleAspectFit
         logoImageView.translatesAutoresizingMaskIntoConstraints = false
         self.view.addSubview(logoImageView)
-        
-        backButton = UIButton(type: .system)
-        let backImage = UIImage(systemName: "chevron.left")
-        backButton.setImage(backImage, for: .normal)
-        backButton.setTitleColor(.white, for: .normal)
-        backButton.tintColor = .white
-        backButton.addTarget(self, action: #selector(backButtonTapped(_:)), for: .touchUpInside)
-        backButton.translatesAutoresizingMaskIntoConstraints = false
-        self.view.addSubview(backButton)
         
         let backgroundView = UIView()
         backgroundView.backgroundColor = UIColor.customGray
@@ -371,29 +319,6 @@ class EditUserViewController: UIViewController, UIImagePickerControllerDelegate,
         addressTextfield.layer.masksToBounds = true
         contentView.addSubview(addressTextfield)
         
-        photoText = UILabel()
-        photoText.text = "Profile photo"
-        photoText.textColor = UIColor.customOrange
-        photoText.font = UIFont.preferredFont(forTextStyle: .footnote)
-        photoText.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(photoText)
-        
-        photoProfileTextField = UITextField()
-        photoProfileTextField.placeholder = "Select photo profile"
-        photoProfileTextField.borderStyle = .roundedRect
-        photoProfileTextField.translatesAutoresizingMaskIntoConstraints = false
-        photoProfileTextField.layer.cornerRadius = 20
-        photoProfileTextField.layer.borderWidth = 1
-        photoProfileTextField.layer.borderColor = UIColor.lightGray.cgColor
-        photoProfileTextField.layer.masksToBounds = true
-        contentView.addSubview(photoProfileTextField)
-        
-        photoButton = UIButton(type: .system)
-        photoButton.setImage(UIImage(systemName: "link"), for: .normal)
-        photoButton.addTarget(self, action: #selector(photoButtonTapped(_:)), for: .touchUpInside)
-        photoButton.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(photoButton)
-        
         addUserButton = UIButton(type: .system)
         addUserButton.setTitle("Update User", for: .normal)
         addUserButton.translatesAutoresizingMaskIntoConstraints = false
@@ -408,9 +333,6 @@ class EditUserViewController: UIViewController, UIImagePickerControllerDelegate,
             logoImageView.topAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.topAnchor, constant: 20),
             logoImageView.widthAnchor.constraint(equalToConstant: 130),
             logoImageView.heightAnchor.constraint(equalToConstant: 40),
-            
-            backButton.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 20),
-            backButton.centerYAnchor.constraint(equalTo: logoImageView.centerYAnchor),
             
             backgroundView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 0),
             backgroundView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: 0),
@@ -477,21 +399,9 @@ class EditUserViewController: UIViewController, UIImagePickerControllerDelegate,
             addressTextfield.topAnchor.constraint(equalTo: addressText.bottomAnchor, constant: 10),
             addressTextfield.heightAnchor.constraint(equalToConstant: 48),
             
-            photoText.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            photoText.topAnchor.constraint(equalTo: addressTextfield.bottomAnchor, constant: 20),
-            
-            photoProfileTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            photoProfileTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            photoProfileTextField.topAnchor.constraint(equalTo: photoText.bottomAnchor, constant: 10),
-            photoProfileTextField.heightAnchor.constraint(equalToConstant: 48),
-            
-            photoButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -40),
-            photoButton.centerYAnchor.constraint(equalTo: photoProfileTextField.centerYAnchor),
-            photoButton.heightAnchor.constraint(equalToConstant: 48),
-            
             addUserButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             addUserButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            addUserButton.topAnchor.constraint(equalTo: photoProfileTextField.bottomAnchor, constant: 20),
+            addUserButton.topAnchor.constraint(equalTo: addressTextfield.bottomAnchor, constant: 20),
             addUserButton.heightAnchor.constraint(equalToConstant: 50),
             addUserButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -40)
         ])

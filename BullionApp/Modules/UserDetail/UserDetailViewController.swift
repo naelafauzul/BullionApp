@@ -33,6 +33,7 @@ class UserDetailViewController: UIViewController {
     let phoneLabel = UILabel()
     let closeButton = UIButton()
     var editUserButton: UIButton!
+    var deleteUserButton: UIButton!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -52,6 +53,24 @@ class UserDetailViewController: UIViewController {
         }
         present(editVC, animated: true, completion: nil)
     }
+    
+    @objc func deleteUserButtonTapped(_ sender: Any) {
+        viewModel.deleteUser(userId: userId ?? "") { [weak self] success, errorMessage in
+            DispatchQueue.main.async {
+                if success {
+                    let alert = UIAlertController(title: "Success", message: "User successfully deleted", preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                    self?.present(alert, animated: true, completion: nil)
+    
+                } else {
+                    let alert = UIAlertController(title: "Error", message: errorMessage ?? "Failed to delete user", preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                    self?.present(alert, animated: true, completion: nil)
+                }
+            }
+        }
+    }
+
     
     private func setupView() {
         closeButton.translatesAutoresizingMaskIntoConstraints = false
@@ -124,6 +143,15 @@ class UserDetailViewController: UIViewController {
         editUserButton.setTitleColor(.white, for: .normal)
         view.addSubview(editUserButton)
         
+        deleteUserButton = UIButton(type: .system)
+        deleteUserButton.setTitle("Delete User", for: .normal)
+        deleteUserButton.addTarget(self, action: #selector(deleteUserButtonTapped(_:)), for: .touchUpInside)
+        deleteUserButton.translatesAutoresizingMaskIntoConstraints = false
+        deleteUserButton.backgroundColor = UIColor.red
+        deleteUserButton.layer.cornerRadius = 20
+        deleteUserButton.setTitleColor(.white, for: .normal)
+        view.addSubview(deleteUserButton)
+        
         NSLayoutConstraint.activate([
             closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
@@ -167,6 +195,11 @@ class UserDetailViewController: UIViewController {
             editUserButton.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -20),
             editUserButton.topAnchor.constraint(equalTo: addressLabel.bottomAnchor, constant: 40),
             editUserButton.heightAnchor.constraint(equalToConstant: 50),
+            
+            deleteUserButton.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 20),
+            deleteUserButton.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -20),
+            deleteUserButton.topAnchor.constraint(equalTo: editUserButton.bottomAnchor, constant: 20),
+            deleteUserButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
     
@@ -189,6 +222,7 @@ class UserDetailViewController: UIViewController {
         emailLabel.text = userDetail.email
         genderLabel.text = userDetail.gender
         addressLabel.text = userDetail.address
+        phoneLabel.text = userDetail.phone
         if let image = userDetail.uiImage {
             imageView.image = image
         }

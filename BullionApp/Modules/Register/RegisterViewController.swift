@@ -42,6 +42,7 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
     var femaleButton: UIButton!
     
     var selectedPhoto: UIImage?
+    var onUserRegistered: (() -> Void)?
     
     var viewModel = RegisterViewModel()
     
@@ -106,15 +107,39 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
     }
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        if let pickedImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage,
-           let imageUrl = info[UIImagePickerController.InfoKey.imageURL] as? URL {
-            photoProfileTextField.text = imageUrl.lastPathComponent
-            selectedPhoto = pickedImage
-            viewModel.photo = pickedImage
+            if let pickedImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage,
+               let imageUrl = info[UIImagePickerController.InfoKey.imageURL] as? URL {
+                
+                // Check file extension
+                let validExtensions = ["jpg", "jpeg"]
+                let fileExtension = imageUrl.pathExtension.lowercased()
+                guard validExtensions.contains(fileExtension) else {
+                    showAlert(message: "Only JPG/JPEG files are allowed")
+                    picker.dismiss(animated: true, completion: nil)
+                    return
+                }
+                
+                // Check file size
+                do {
+                    let fileData = try Data(contentsOf: imageUrl)
+                    let fileSize = Double(fileData.count) / (1024.0 * 1024.0) 
+                    guard fileSize <= 5.0 else {
+                        showAlert(message: "File size must be less than 5MB")
+                        picker.dismiss(animated: true, completion: nil)
+                        return
+                    }
+                } catch {
+                    showAlert(message: "Failed to read file size")
+                    picker.dismiss(animated: true, completion: nil)
+                    return
+                }
+                
+                photoProfileTextField.text = imageUrl.lastPathComponent
+                selectedPhoto = pickedImage
+                viewModel.photo = pickedImage
+            }
+            dismiss(animated: true, completion: nil)
         }
-        dismiss(animated: true, completion: nil)
-    }
-    
     
     @objc func addUserButtonTapped(_ sender: UIButton) {
         guard let name = nameTextField.text, !name.isEmpty,
@@ -145,8 +170,8 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
             return
         }
         
-        let firstName = String(nameComponents.first!)
-        let lastName = String(nameComponents.last!)
+        let firstName = nameComponents.dropLast().joined(separator: " ")
+        let lastName = nameComponents.last.map { String($0) } ?? ""
         
         viewModel.firstName = firstName
         viewModel.lastName = lastName
@@ -158,6 +183,7 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         viewModel.address = address
         
         viewModel.registerUser()
+        self.onUserRegistered?()
     }
     
     func validatePassword(_ password: String) -> Bool {
@@ -171,16 +197,18 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         viewModel.onRegisterSuccess = { [weak self] in
             DispatchQueue.main.async {
                 self?.showAlert(message: "Registration successful")
+                self?.onUserRegistered?() 
+                self?.navigationController?.popViewController(animated: true)
             }
         }
         
         viewModel.onRegisterError = { [weak self] errorMessage in
             DispatchQueue.main.async {
                 self?.showAlert(message: errorMessage)
-                print(errorMessage)
             }
         }
     }
+
     
     func setupView() {
         logoImageView = UIImageView()
@@ -312,6 +340,7 @@ class RegisterViewController: UIViewController, UIImagePickerControllerDelegate,
         emailTextField = UITextField()
         emailTextField.placeholder = "Enter email"
         emailTextField.borderStyle = .roundedRect
+        emailTextField.autocapitalizationType = .none
         emailTextField.translatesAutoresizingMaskIntoConstraints = false
         emailTextField.layer.cornerRadius = 20
         emailTextField.layer.borderWidth = 1

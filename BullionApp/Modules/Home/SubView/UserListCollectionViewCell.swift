@@ -25,11 +25,13 @@ class UserCollectionViewCell: UICollectionViewCell {
 
     private func setupView() {
         contentView.layer.cornerRadius = 10
-        contentView.layer.masksToBounds = true
+        contentView.layer.masksToBounds = false
         contentView.backgroundColor = .white
-        contentView.layer.borderWidth = 1
-        contentView.layer.borderColor = UIColor.lightGray.cgColor
-        
+        contentView.layer.shadowColor = UIColor.black.cgColor
+        contentView.layer.shadowOpacity = 0.2
+        contentView.layer.shadowOffset = CGSize(width: 0, height: 2)
+        contentView.layer.shadowRadius = 4
+
         userImageView.translatesAutoresizingMaskIntoConstraints = false
         userImageView.contentMode = .scaleAspectFill
         userImageView.layer.cornerRadius = 5
@@ -47,28 +49,25 @@ class UserCollectionViewCell: UICollectionViewCell {
         contentView.addSubview(userEmailLabel)
 
         userDateLabel.translatesAutoresizingMaskIntoConstraints = false
-        userDateLabel.font = UIFont.systemFont(ofSize: 14)
-        userDateLabel.textColor = .gray
+        userDateLabel.font = UIFont.systemFont(ofSize: 10)
         contentView.addSubview(userDateLabel)
 
         NSLayoutConstraint.activate([
-            userImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 10),
-            userImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
+            userImageView.centerYAnchor.constraint(equalTo: self.contentView.centerYAnchor),
+            userImageView.leadingAnchor.constraint(equalTo: self.contentView.leadingAnchor, constant: 20),
             userImageView.widthAnchor.constraint(equalToConstant: 40),
             userImageView.heightAnchor.constraint(equalToConstant: 40),
 
-            userNameLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
+            userNameLabel.topAnchor.constraint(equalTo: userImageView.topAnchor),
             userNameLabel.leadingAnchor.constraint(equalTo: userImageView.trailingAnchor, constant: 10),
             userNameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -10),
 
-            userEmailLabel.topAnchor.constraint(equalTo: userNameLabel.bottomAnchor, constant: 5),
+            userEmailLabel.topAnchor.constraint(equalTo: userNameLabel.bottomAnchor, constant: 3),
             userEmailLabel.leadingAnchor.constraint(equalTo: userNameLabel.leadingAnchor),
             userEmailLabel.trailingAnchor.constraint(equalTo: userNameLabel.trailingAnchor),
 
-            userDateLabel.topAnchor.constraint(equalTo: userEmailLabel.bottomAnchor, constant: 5),
-            userDateLabel.leadingAnchor.constraint(equalTo: userNameLabel.leadingAnchor),
-            userDateLabel.trailingAnchor.constraint(equalTo: userNameLabel.trailingAnchor),
-            userDateLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10)
+            userDateLabel.centerYAnchor.constraint(equalTo: self.userImageView.centerYAnchor),
+            userDateLabel.trailingAnchor.constraint(equalTo: self.contentView.trailingAnchor, constant: -20),
         ])
     }
 
@@ -91,4 +90,3 @@ class UserCollectionViewCell: UICollectionViewCell {
         return dateString
     }
 }
-

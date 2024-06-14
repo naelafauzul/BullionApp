@@ -40,8 +40,16 @@ class HomeViewController: UIViewController {
     
     @objc func addUserButtonTapped(_ sender: Any) {
         let registerVC = RegisterViewController()
+        registerVC.onUserRegistered = { [weak self] in
+            self?.HomeVM.fetchUsers {
+                DispatchQueue.main.async {
+                    self?.collectionView.reloadData()
+                }
+            }
+        }
         self.navigationController?.pushViewController(registerVC, animated: true)
     }
+
     
     func setupView() {
         logoImageView = UIImageView()
@@ -70,7 +78,7 @@ class HomeViewController: UIViewController {
         
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
-        layout.minimumLineSpacing = 10
+        layout.minimumLineSpacing = 15
         
         bannerCollectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         bannerCollectionView.translatesAutoresizingMaskIntoConstraints = false
@@ -82,8 +90,8 @@ class HomeViewController: UIViewController {
         self.view.addSubview(bannerCollectionView)
         
         NSLayoutConstraint.activate([
-            bannerCollectionView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 20),
-            bannerCollectionView.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 30),
+            bannerCollectionView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 0),
+            bannerCollectionView.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 10),
             bannerCollectionView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: 0),
             bannerCollectionView.heightAnchor.constraint(equalToConstant: 160),
         ])
@@ -136,7 +144,7 @@ class HomeViewController: UIViewController {
         let layoutVertical = UICollectionViewFlowLayout()
         layoutVertical.scrollDirection = .vertical
         layoutVertical.minimumLineSpacing = 10
-        layoutVertical.itemSize = CGSize(width: view.frame.width - 40, height: 100)
+        layoutVertical.itemSize = CGSize(width: view.frame.width - 40, height: 50)
         
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: layoutVertical)
         collectionView.translatesAutoresizingMaskIntoConstraints = false
@@ -220,9 +228,9 @@ extension HomeViewController: UICollectionViewDataSource, UICollectionViewDelega
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         if collectionView == bannerCollectionView {
-            return CGSize(width: collectionView.frame.width, height: collectionView.frame.height)
+            return CGSize(width: 300, height: 160)
         } else {
-            return CGSize(width: collectionView.frame.width - 40, height: 100)
+            return CGSize(width: collectionView.frame.width - 40, height: 70)
         }
     }
     
