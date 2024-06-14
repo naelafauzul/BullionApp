@@ -278,6 +278,7 @@ class EditUserViewController: UIViewController, UIImagePickerControllerDelegate,
         emailTextField = UITextField()
         emailTextField.placeholder = "Enter email"
         emailTextField.borderStyle = .roundedRect
+        emailTextField.autocapitalizationType = .none
         emailTextField.translatesAutoresizingMaskIntoConstraints = false
         emailTextField.layer.cornerRadius = 20
         emailTextField.layer.borderWidth = 1
