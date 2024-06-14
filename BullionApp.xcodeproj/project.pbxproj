@@ -28,6 +28,7 @@
 		91CCF7332C19C1EC0089109C /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CCF7322C19C1EC0089109C /* HomeViewController.swift */; };
 		91CCF7372C19CBBF0089109C /* UserListMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CCF7362C19CBBF0089109C /* UserListMode.swift */; };
 		91CCF7392C19CBD90089109C /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CCF7382C19CBD90089109C /* HomeViewModel.swift */; };
+		91EAFE492C1C6B8200739C9B /* FullImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91EAFE482C1C6B8200739C9B /* FullImageViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -54,6 +55,7 @@
 		91CCF7322C19C1EC0089109C /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
 		91CCF7362C19CBBF0089109C /* UserListMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserListMode.swift; sourceTree = "<group>"; };
 		91CCF7382C19CBD90089109C /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
+		91EAFE482C1C6B8200739C9B /* FullImageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullImageViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -81,6 +83,7 @@
 			children = (
 				9170B4D12C1AAF430059D423 /* UserDetailViewController.swift */,
 				9176D35A2C1C02D60093A6F5 /* UserViewModel.swift */,
+				91EAFE482C1C6B8200739C9B /* FullImageViewController.swift */,
 			);
 			path = UserDetail;
 			sourceTree = "<group>";
@@ -266,6 +269,7 @@
 				91CCF7172C19A7780089109C /* ViewController.swift in Sources */,
 				91CCF7132C19A7780089109C /* AppDelegate.swift in Sources */,
 				9170B4D42C1ABEF20059D423 /* RegisterModel.swift in Sources */,
+				91EAFE492C1C6B8200739C9B /* FullImageViewController.swift in Sources */,
 				9170B4D02C1AAF040059D423 /* UserDetailModel.swift in Sources */,
 				9176D35B2C1C02D60093A6F5 /* UserViewModel.swift in Sources */,
 				91CCF72B2C19AA680089109C /* RegisterViewController.swift in Sources */,

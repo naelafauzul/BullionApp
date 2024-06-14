@@ -5,13 +5,6 @@
 //  Created by Naela Fauzul Muna on 13/06/24.
 //
 
-//
-//  UserDetailViewController.swift
-//  BullionApp
-//
-//  Created by Naela Fauzul Muna on 13/06/24.
-//
-
 import UIKit
 
 class UserDetailViewController: UIViewController {
@@ -59,9 +52,10 @@ class UserDetailViewController: UIViewController {
             DispatchQueue.main.async {
                 if success {
                     let alert = UIAlertController(title: "Success", message: "User successfully deleted", preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                    alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                        self?.dismiss(animated: true, completion: nil)
+                    })
                     self?.present(alert, animated: true, completion: nil)
-    
                 } else {
                     let alert = UIAlertController(title: "Error", message: errorMessage ?? "Failed to delete user", preferredStyle: .alert)
                     alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
@@ -70,7 +64,20 @@ class UserDetailViewController: UIViewController {
             }
         }
     }
-
+    
+    @objc func closeButtonTapped() {
+        onDismiss?()
+        dismiss(animated: true, completion: nil)
+    }
+    
+    @objc func imageViewTapped(_ sender: UITapGestureRecognizer) {
+        if let image = imageView.image {
+            let fullImageVC = FullImageViewController()
+            fullImageVC.image = image
+            fullImageVC.modalPresentationStyle = .fullScreen
+            present(fullImageVC, animated: true, completion: nil)
+        }
+    }
     
     private func setupView() {
         closeButton.translatesAutoresizingMaskIntoConstraints = false
@@ -83,6 +90,9 @@ class UserDetailViewController: UIViewController {
         imageView.contentMode = .scaleAspectFill
         imageView.layer.cornerRadius = 8
         imageView.clipsToBounds = true
+        imageView.isUserInteractionEnabled = true
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageViewTapped(_:)))
+        imageView.addGestureRecognizer(tapGesture)
         view.addSubview(imageView)
         
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -243,10 +253,5 @@ class UserDetailViewController: UIViewController {
         let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
         present(alert, animated: true, completion: nil)
-    }
-    
-    @objc private func closeButtonTapped() {
-        onDismiss?()
-        dismiss(animated: true, completion: nil)
     }
 }
